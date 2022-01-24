@@ -17,27 +17,34 @@ const images = [
 
 class Slider {
 
-    constructor(images) {
+    constructor(images, settings) {
         this.images = images;
+        this.slidesToShow = settings.slidesToShow;
+        this.slidesToScroll = settings.slidesToScroll;
+
         this.initElements();
+        this.addDots();
+        this.showSlider();
     }
 
     initElements() {
-        this.sliderContent = document.querySelector(".slider__wrap");
+        this.wrap = document.querySelector(".slider__wrap");
+        this.sliderTrack = document.querySelector(".slider__track");
+
+        this.position = 0;
+        this.itemWidth = this.wrap.clientWidth / this.slidesToShow;
+        this.movePosition = this.slidesToScroll * this.itemWidth;
     }
 
     addDots() {
         let dots = 0;
-        if (this.images.length > 3) {
-            dots = Math.ceil(this.images.length / 3);
-        } else {
-            this.showSlider(0);
-            return
-        };
+        if (this.images.length > this.slidesToShow) {
+            dots = Math.ceil(this.images.length / this.slidesToScroll);
+        }
 
         const dotsContainer = document.createElement("div");
         dotsContainer.classList.add("dots");
-        this.sliderContent.after(dotsContainer);
+        this.wrap.after(dotsContainer);
 
         this.dotsList = document.createElement("div");
         this.dotsList.classList.add("dots__list");
@@ -51,22 +58,10 @@ class Slider {
 
         this.dotsLi = document.querySelectorAll(".dots__item");
         
-        this.showSlider(0);
-        this.getActive(0);
-
-        this.dotsList.addEventListener("click", (e) => {
-            if (!e.target.matches("a")) return;
-            let index = e.target.dataset.index;
-            this.getActive(+index);
-            this.showSlider(+index);
-        })
-
     }
-
-    showSlider(index) {
-        const sliderArr = this.images.map((image, i) => {
-            if (index * 3 <= i && i < (index + 1) * 3)
-                return `
+    showSlider() {
+        const sliderHtml = this.images.map(image => {
+            return `
                 <div class="card" style="width: 18rem;">
                     <img src="${image.url}" class="card-img-top" alt="${image.name}">
                     <div class="card-body">
@@ -76,22 +71,36 @@ class Slider {
                         </p>
                     </div>
                 </div>
-            `;
-        })
-        this.sliderContent.innerHTML = sliderArr.join("");
+                `;
+        });
+        this.sliderTrack.innerHTML = sliderHtml.join("");
+
+        this.sliderItems = this.sliderTrack.querySelectorAll('.card');
+        this.sliderItems.forEach(item => item.style.minWidth = this.itemWidth + "px");
+        this.moveSlider();
+        this.getActive(0);
     }
 
     getActive(index) {
-        this.dotsLi.forEach((li, i) =>{
-            if(index == i) {
+        this.dotsLi.forEach((li, i) => {
+            if (index == i) {
                 li.classList.add("active");
             } else {
                 li.classList.remove("active");
             }
         })
+
+    }
+    moveSlider() {
+        this.dotsList.addEventListener("click", (e) => {
+            if (!e.target.matches("a")) return;
+            this.position = e.target.dataset.index;
+            this.sliderTrack.style.transform = `translateX(-${this.position * this.movePosition}px)`;
+            this.getActive(this.position);
+        })
     }
 
 }
 
-new Slider(images)
-    .addDots();
+const mainSlider = new Slider(images, { "slidesToShow": 3, "slidesToScroll": 3 });
+
